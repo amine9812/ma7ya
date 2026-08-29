@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Rapport Complet d'Architecture et de Codebase — Urbanova Real Estate. Audit technique exhaustif, explorateur arborescent IDE, modèles, routes et sécurité.">
+  <meta name="author" content="Urbanova Real Estate Architecture Audit">
+  <title>Urbanova Real Estate — Rapport d'Architecture & Codebase</title>
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏛️</text></svg>">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       BARRE LATÉRALE VERTICALE PLIABLE (SIDEBAR)
+       ========================================================================== -->
+  <aside class="app-sidebar" id="app-sidebar" aria-label="Navigation principale">
+    
+    <!-- En-tête de la Barre Latérale -->
+    <div class="sidebar-header">
+      <div class="sidebar-brand" onclick="switchTab('summary')">
+        <div class="brand-seal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <span class="brand-title">URBANOVA</span>
+          <span class="brand-subtitle">Architecture Audit</span>
+        </div>
+      </div>
+
+      <!-- Bouton Réduire / Déplier la Barre Latérale -->
+      <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Réduire / Déplier la barre latérale">
+        <span id="sidebar-toggle-icon">⇤</span>
+      </button>
+    </div>
+
+    <!-- Contenu Déroulant des Onglets -->
+    <div class="sidebar-content">
+      <div class="sidebar-nav-section-title">Navigation du Rapport</div>
+
+      <button class="sidebar-tab-link active" data-tab="summary" onclick="switchTab('summary')">
+        <span class="sidebar-tab-icon">🏛️</span>
+        <span class="sidebar-tab-text">Vue d'ensemble</span>
+        <span class="sidebar-tab-badge">Intro</span>
+      </button>
+
+      <button class="sidebar-tab-link" data-tab="tree" onclick="switchTab('tree')">
+        <span class="sidebar-tab-icon">🌳</span>
+        <span class="sidebar-tab-text">Arborescence & Fichiers</span>
+        <span class="sidebar-tab-badge">430+</span>
+      </button>
+
+      <button class="sidebar-tab-link" data-tab="django" onclick="switchTab('django')">
+        <span class="sidebar-tab-icon">⚙️</span>
+        <span class="sidebar-tab-text">Cœur Django & Clés</span>
+        <span class="sidebar-tab-badge">22 Méc.</span>
+      </button>
+
+      <button class="sidebar-tab-link" data-tab="database" onclick="switchTab('database')">
+        <span class="sidebar-tab-icon">💾</span>
+        <span class="sidebar-tab-text">Base & Modèles</span>
+        <span class="sidebar-tab-badge">~40</span>
+      </button>
+
+      <button class="sidebar-tab-link" data-tab="routing" onclick="switchTab('routing')">
+        <span class="sidebar-tab-icon">🌐</span>
+        <span class="sidebar-tab-text">Routes & API REST</span>
+        <span class="sidebar-tab-badge">13 Apps</span>
+      </button>
+
+      <button class="sidebar-tab-link" data-tab="frontend" onclick="switchTab('frontend')">
+        <span class="sidebar-tab-icon">🎨</span>
+        <span class="sidebar-tab-text">Frontend & UI</span>
+        <span class="sidebar-tab-badge">107 Tpl</span>
+      </button>
+
+      <button class="sidebar-tab-link" data-tab="workflows" onclick="switchTab('workflows')">
+        <span class="sidebar-tab-icon">🔄</span>
+        <span class="sidebar-tab-text">Parcours Métier</span>
+        <span class="sidebar-tab-badge">6 Flux</span>
+      </button>
+
+      <button class="sidebar-tab-link" data-tab="security" onclick="switchTab('security')">
+        <span class="sidebar-tab-icon">🔒</span>
+        <span class="sidebar-tab-text">Sécurité & Verdict</span>
+        <span class="sidebar-tab-badge">13 Risques</span>
+      </button>
+    </div>
+
+    <!-- Pied de Barre Latérale avec Actions Rapides -->
+    <div class="sidebar-footer">
+      <button class="sidebar-action-btn" onclick="openSearchModal()" style="width:100%;" title="Recherche Globale (Ctrl+K)">
+        <span class="btn-icon">🔍</span>
+        <span>Rechercher...</span>
+      </button>
+
+      <div class="sidebar-footer-row">
+        <button class="sidebar-action-btn" onclick="toggleTheme()" title="Basculer Mode Clair / Sombre">
+          <span class="btn-icon" id="theme-icon">☀️</span>
+          <span>Thème</span>
+        </button>
+        <button class="sidebar-action-btn" onclick="toggleFullScreen()" title="Plein Écran">
+          <span class="btn-icon">⛶</span>
+          <span>Plein Écran</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ==========================================================================
+       ZONE DE CONTENU PRINCIPAL & TOPBAR
+       ========================================================================== -->
+  <div class="app-main-area">
+
+    <!-- Topbar avec Titre de Section & Actions -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-trigger" onclick="toggleMobileSidebar()" title="Ouvrir le menu">☰</button>
+        <div class="topbar-breadcrumb">
+          <span>Rapport d'Architecture</span>
+          <span>›</span>
+          <strong id="topbar-active-tab-title">Vue d'ensemble & Architecture</strong>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <button class="search-trigger-btn" onclick="openSearchModal()" title="Rechercher (Ctrl+K)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <span>Recherche globale...</span>
+          <span class="search-shortcut-badge">Ctrl K</span>
+        </button>
+
+        <button class="icon-btn" onclick="window.print()" title="Imprimer / Exporter en PDF">
+          <span>🖨️</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Conteneur de Contenu des Onglets -->
+    <main class="content-wrapper">
+
+      <!-- ==========================================================================
+           ONGLET 1 : 🏛️ VUE D'ENSEMBLE & SYNTHÈSE
+           ========================================================================== -->
+      <section class="tab-content-panel active" id="tab-summary">
+        
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+          <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.25rem;">
+            <span class="badge badge-confirmed">✓ Audit Direct du Dépôt</span>
+            <span class="badge badge-inferred">💡 Jumeau Numérique Immobilier Marocain</span>
+            <span class="badge badge-history">⌛ Rebranding Yahya / ImmoTwin → Urbanova</span>
+          </div>
+
+          <h1>Rapport Complet d'Architecture & Codebase</h1>
+          <p style="font-size: 1.12rem; color: var(--text-secondary); max-width: 980px; line-height: 1.75; margin-bottom: 1.5rem;">
+            Urbanova Real Estate est une plateforme web Django monolithique modulaire servant de « jumeau numérique » du marché immobilier marocain, intégrant estimation de prix par IA (AVM), gestion locative (loi 67-12), CRM d'agence, crowdinvesting, enchères et cartographie 3D.
+          </p>
+
+          <div class="hero-stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">13</div>
+              <div class="stat-label">Applications Django</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">~430</div>
+              <div class="stat-label">Fichiers Suivis Git</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">~40</div>
+              <div class="stat-label">Modèles de Données</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">107</div>
+              <div class="stat-label">Templates Django</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">5.1.5</div>
+              <div class="stat-label">Version Django</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Méthodologie et limites -->
+        <div class="notice-box">
+          <h3>Méthodologie et Limites Déclarées de l'Audit</h3>
+          <p>
+            Ce rapport a été produit par inspection directe du dépôt (lecture de fichiers, <code>git status</code>, <code>git ls-files</code>, comptage de lignes, scripts d'introspection Django). Chaque affirmation est certifiée :
+          </p>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.75rem 0;">
+            <span class="badge badge-confirmed">✓ Confirmé (Vérifié directement dans le code)</span>
+            <span class="badge badge-partial">⚡ Partiel (Vérifié en partie)</span>
+            <span class="badge badge-notfound">✕ Non constaté (Attendu mais absent)</span>
+            <span class="badge badge-history">⌛ Historique (Code/Doc obsolète non actif)</span>
+            <span class="badge badge-inferred">💡 Inféré (Déduit logiquement sans exécution runtime complète)</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+            *Aucun secret (<code>SECRET_KEY</code>, mots de passe, tokens) n'est reproduit. Les fichiers <code>views.py</code> volumineux (jusqu'à 1490 lignes pour <code>dashboard/views.py</code>) ont été analysés à l'échelle des classes et endpoints.
+          </p>
+        </div>
+
+        <!-- Analogie de vulgarisation -->
+        <div class="analogy-box">
+          <div class="analogy-header">Analogie Concrète : Le Siège Social de Grande Entreprise</div>
+          <div class="analogy-content">
+            "Pensez à Urbanova comme au siège social d'une grande entreprise : chaque étage abrite un département autonome (Comptabilité, Juridique, CRM, RH, R&D). Tous les étages partagent les mêmes fondations, les mêmes arrivées électriques et le même hall d'accueil (Django + Base de données commune), mais chaque service traite ses propres dossiers en toute indépendance."
+          </div>
+        </div>
+
+        <!-- Synthèse Exécutive -->
+        <h2>Synthèse Exécutive (Executive Summary)</h2>
+        <div class="card-grid">
+          <div class="glass-card highlight-blue">
+            <h3 style="margin-top:0;">Objet & Problème Métier</h3>
+            <p>
+              Urbanova centralise la recherche de biens, l'estimation IA, la gestion locative, le CRM d'agence, le financement participatif, les enchères et la conformité juridique/technique — éliminant le fractionnement traditionnel entre agence, notaire et banque.
+            </p>
+          </div>
+
+          <div class="glass-card highlight-gold">
+            <h3 style="margin-top:0;">Utilisateurs Cibles & Rôles</h3>
+            <p>Défini via <code>accounts/models.py::User.Role</code> :</p>
+            <ul style="margin-left: 1.25rem; font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+              <li><strong>Administrateur</strong> (<code>admin</code>) : Pilotage global</li>
+              <li><strong>Agence Immobilière</strong> (<code>agency</code>) : CRM & agents</li>
+              <li><strong>Propriétaire</strong> (<code>owner</code>) : Biens & baux loi 67-12</li>
+              <li><strong>Client / Investisseur</strong> (<code>client</code>) : Recherche & crowdinvest</li>
+            </ul>
+          </div>
+
+          <div class="glass-card highlight-emerald">
+            <h3 style="margin-top:0;">Architecture & Stack Technique</h3>
+            <p>
+              <strong>Monolithe modulaire Django 5.1</strong> (13 applications locales). Rendu serveur SSR (Django Templates) enrichi par Tailwind CSS compilé localement, Alpine.js, Leaflet et Three.js. API REST DRF sur 4 modules avec documentation Swagger.
+            </p>
+          </div>
+
+          <div class="glass-card highlight-ruby">
+            <h3 style="margin-top:0;">Maturité & Prévu vs Réel</h3>
+            <p>
+              Toutes les fonctions du cahier des charges disposent d'un code exécutable. Les points à consolider concernent la couverture de tests (5 apps sans test), 2 migrations non trackées et la sécurisation des variables d'environnement en production.
+            </p>
+          </div>
+        </div>
+
+        <!-- Exemple Observé -->
+        <div class="glass-card highlight-gold" style="margin: 2rem 0;">
+          <h3 style="margin-top:0;">Exemple d'Application Observé (Flux Réel Vérifié)</h3>
+          <p>
+            Un visiteur anonyme arrive sur <code>/</code> (<code>HomeView</code>), consulte la liste des biens (<code>/properties/</code>), ouvre la fiche d'une villa (<code>/properties/&lt;id&gt;/</code>), puis clique sur « Contacter » — ce qui crée un <code>ContactRequest</code> (<code>properties/models.py</code>). S'il souhaite investir, il crée un compte via <code>/accounts/register/</code> (rôle <code>client</code>), se connecte, consulte <code>/crowdinvest/</code>, choisit un projet et souscrit via <code>InvestmentForm</code> — créant un enregistrement <code>Investment</code> lié au <code>Project</code>.
+          </p>
+        </div>
+
+        <!-- Partie I : Tableau des Technologies Exhaustif -->
+        <h2>Partie I — Technologies & Architecture Globale</h2>
+        <p>Inventaire exhaustif des 22 technologies analysées dans le code source :</p>
+
+        <div class="table-container">
+          <div class="table-controls">
+            <input type="text" class="table-search-input" placeholder="Filtrer une technologie..." onkeyup="filterTable('tech-table', this.value)">
+            <div class="table-filter-pills">
+              <span class="filter-pill active" onclick="filterTableByBadge('tech-table', '')">Tous</span>
+              <span class="filter-pill" onclick="filterTableByBadge('tech-table', 'Confirmé')">Confirmé</span>
+              <span class="filter-pill" onclick="filterTableByBadge('tech-table', 'Partiel')">Partiel</span>
+              <span class="filter-pill" onclick="filterTableByBadge('tech-table', 'Non constaté')">Non constaté</span>
+            </div>
+          </div>
+
+          <table class="custom-table" id="tech-table">
+            <thead>
+              <tr>
+                <th>Technologie / Outil</th>
+                <th>Version</th>
+                <th>Où déclarée</th>
+                <th>Rôle</th>
+                <th>Pourquoi ce choix</th>
+                <th>Statut d'usage</th>
+                <th>Évidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Python</strong></td>
+                <td><code>3.12</code></td>
+                <td><code>Dockerfile</code>, CI</td>
+                <td>Langage backend</td>
+                <td>Écosystème Django + ML mature, lisibilité</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Django</strong></td>
+                <td><code>5.1.5</code></td>
+                <td><code>requirements.txt</code></td>
+                <td>Framework web principal (MVT)</td>
+                <td>ORM intégré, admin auto-généré, sécurité CSRF/XSS par défaut</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Django REST Framework</strong></td>
+                <td><code>3.15.2</code></td>
+                <td><code>requirements.txt</code>, <code>settings/base.py</code></td>
+                <td>API REST pour 4 apps</td>
+                <td>Sérialisation, pagination et permissions standardisées</td>
+                <td><span class="badge badge-partial">Actif (4 apps sur 13)</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>django-filter</strong></td>
+                <td><code>24.3</code></td>
+                <td><code>requirements.txt</code></td>
+                <td>Filtrage déclaratif des querysets API</td>
+                <td>Réduit le code de filtrage manuel côté DRF</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>drf-spectacular</strong></td>
+                <td><code>0.28.0</code></td>
+                <td><code>requirements.txt</code>, <code>config/urls.py</code></td>
+                <td>Documentation OpenAPI 3 / Swagger</td>
+                <td>Documentation API auto-générée sur <code>/api/docs/</code></td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>PostgreSQL + PostGIS</strong></td>
+                <td><code>16-3.4</code></td>
+                <td><code>docker-compose.yml</code>, <code>base.py</code></td>
+                <td>BDD relationnelle + extension spatiale</td>
+                <td>Requêtes spatiales natives (GPS, proximité, index GiST)</td>
+                <td><span class="badge badge-confirmed">Actif (Prod/Docker)</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>SQLite</strong></td>
+                <td>Système</td>
+                <td><code>base.py</code> (<code>USE_SQLITE=True</code>)</td>
+                <td>BDD de développement / CI</td>
+                <td>Zéro configuration locale, rapidité d'exécution</td>
+                <td><span class="badge badge-confirmed">Actif (Dev/CI)</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>GeoDjango</strong></td>
+                <td>Django 5.1</td>
+                <td><code>django.contrib.gis</code> dans <code>INSTALLED_APPS</code></td>
+                <td>ORM géospatial (PointField)</td>
+                <td>Gestion native de <code>Property.location</code> & <code>Agency.location</code></td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>GDAL / GEOS / PROJ</strong></td>
+                <td>Système</td>
+                <td><code>Dockerfile</code>, <code>win_gdal_patch.py</code></td>
+                <td>Bibliothèques bas niveau GeoDjango</td>
+                <td>Dépendances obligatoires du moteur géométrique</td>
+                <td><span class="badge badge-confirmed">Actif (patch Windows)</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Redis</strong></td>
+                <td><code>7-alpine</code></td>
+                <td><code>docker-compose.yml</code>, <code>base.py</code></td>
+                <td>Cache + file d'attente <code>property_views_queue</code></td>
+                <td>Évite les écritures DB synchrones à chaque vue de bien</td>
+                <td><span class="badge badge-confirmed">Actif (LocMem fallback)</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>django-redis</strong></td>
+                <td><code>5.4.0</code></td>
+                <td><code>requirements.txt</code></td>
+                <td>Backend de cache Redis pour Django</td>
+                <td>Intégration Redis native Django</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Celery</strong></td>
+                <td>—</td>
+                <td>—</td>
+                <td>Traitement asynchrone en tâche de fond</td>
+                <td>—</td>
+                <td><span class="badge badge-notfound">Non constaté</span></td>
+                <td><span class="badge badge-notfound">Non constaté (file Redis simple)</span></td>
+              </tr>
+              <tr>
+                <td><strong>Docker / Compose</strong></td>
+                <td>Multi-stage</td>
+                <td><code>Dockerfile</code>, <code>docker-compose*.yml</code></td>
+                <td>Conteneurisation (Build Node + Python final)</td>
+                <td>Reproductibilité et isolation de déploiement</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Gunicorn</strong></td>
+                <td><code>22.0.0</code></td>
+                <td><code>requirements.txt</code>, <code>Procfile</code></td>
+                <td>Serveur WSGI de production</td>
+                <td>Multi-worker robuste, standard Django</td>
+                <td><span class="badge badge-confirmed">Actif en Prod</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Nginx</strong></td>
+                <td>—</td>
+                <td>Dossier <code>nginx/</code>, <code>README.md</code></td>
+                <td>Reverse proxy / TLS (déploiement VPS)</td>
+                <td>Terminaison SSL et performance statique</td>
+                <td><span class="badge badge-partial">Partiel (VPS uniquement)</span></td>
+                <td><span class="badge badge-partial">Partiel</span></td>
+              </tr>
+              <tr>
+                <td><strong>Whitenoise</strong></td>
+                <td><code>6.7.0</code></td>
+                <td><code>requirements.txt</code></td>
+                <td>Service des fichiers statiques direct</td>
+                <td>Simplifie le déploiement sur PaaS (Render, Fly)</td>
+                <td><span class="badge badge-partial">Partiel (PaaS)</span></td>
+                <td><span class="badge badge-partial">Partiel</span></td>
+              </tr>
+              <tr>
+                <td><strong>Tailwind CSS</strong></td>
+                <td><code>^3.4.1</code></td>
+                <td><code>package.json</code>, <code>tailwind.config.js</code></td>
+                <td>CSS utilitaire compilé localement</td>
+                <td>Cohérence visuelle, pas de CDN en production</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Alpine.js</strong></td>
+                <td>—</td>
+                <td>Mention README, attributs <code>x-data</code></td>
+                <td>Interactivité JS déclarative légère</td>
+                <td>Léger, aucun build step nécessaire</td>
+                <td><span class="badge badge-partial">Partiel (CDN externe)</span></td>
+                <td><span class="badge badge-partial">Partiel</span></td>
+              </tr>
+              <tr>
+                <td><strong>JavaScript Vanilla</strong></td>
+                <td>ES6+</td>
+                <td><code>static/js/*.js</code> (10 scripts)</td>
+                <td>Interactions frontend, AJAX, voix</td>
+                <td>Simplicité pour un site majoritairement SSR</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Leaflet (django-leaflet)</strong></td>
+                <td><code>0.30.1</code></td>
+                <td><code>requirements.txt</code>, <code>base.py</code></td>
+                <td>Cartographie interactive OpenStreetMap</td>
+                <td>Léger, open source, gratuit sans clé API</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Three.js</strong></td>
+                <td>CDN</td>
+                <td><code>digital_twin_map.html</code></td>
+                <td>Rendu 3D du jumeau numérique</td>
+                <td>Simulation solaire & affichage volumétrique 3D</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>Groq (LLM Cloud)</strong></td>
+                <td><code>0.5.0</code></td>
+                <td><code>requirements.txt</code>, <code>base.py</code></td>
+                <td>Chatbot RAG et génération de texte IA</td>
+                <td>Inférence ultra-rapide et économique (Llama 3)</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>scikit-learn & XGBoost</strong></td>
+                <td><code>1.5.1</code> / <code>2.1.1</code></td>
+                <td><code>requirements.txt</code>, <code>ai/services/ml/</code></td>
+                <td>Modèle d'estimation de prix (AVM) + SHAP</td>
+                <td>Régression tabulaire performante pour l'immobilier</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><strong>ReportLab</strong></td>
+                <td><code>4.2.5</code></td>
+                <td><code>requirements.txt</code>, services PDF</td>
+                <td>Génération de PDF réels (avis de valeur, bail)</td>
+                <td>Contrôle fin de mise en page, conforme loi 67-12</td>
+                <td><span class="badge badge-confirmed">Actif</span></td>
+                <td><span class="badge badge-confirmed">Confirmé (testé %PDF)</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Flux Architectural -->
+        <h2>Diagramme Architectural du Flux de Requête</h2>
+        <div class="code-block-wrapper">
+          <div class="code-header">
+            <span class="code-lang-label">Cycle Complet d'une Requête HTTP (Monolithe Modulaire Django)</span>
+            <button class="copy-code-btn" onclick="copyCode(this)">Copier</button>
+          </div>
+          <pre><code>Navigateur Client
+  │
+  ▼ (1) Requête HTTP (SSR) ou appel Fetch AJAX
+Middlewares Django : Security ➔ Session ➔ Common ➔ CSRF ➔ Auth ➔ Messages ➔ Tracking (dashboard/middleware.py)
+  │
+  ▼ (2) Résolution de Route
+config/urls.py ➔ Routeurs d'application (13 apps) ou API REST (4 apps)
+  │
+  ▼ (3) Contrôle d'Accès par Rôle
+Mixins de Rôle (accounts/permissions.py) : RoleRequiredMixin / Admin / Agency / Owner / Client
+  │
+  ▼ (4) Validation & Logique Métier
+Formulaires (PropertyForm, VisitForm...) OU Services PDF/ML (valuation_report.py, contracts_pdf.py)
+  │
+  ▼ (5) Persistance ORM
+Django ORM (PointField GeoDjango, ~40 modèles de données)
+  │
+  ├───► PostgreSQL 16 + PostGIS 3.4 (Prod/Docker) OU SQLite (Dev/CI)
+  ├───► Redis 7 (Cache rapide + File d'attente property_views_queue)
+  └───► Groq Cloud LLM / FAISS (Recherche vectorielle RAG)
+  │
+  ▼ (6) Rendu & Réponse
+Templates HTML + Tailwind CSS + Alpine.js + Leaflet/Three.js (Pages) OU JSON Response (API REST)</code></pre>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           ONGLET 2 : 🌳 ARBORESCENCE & FICHIERS (EXPLORATEUR IDE)
+           ========================================================================== -->
+      <section class="tab-content-panel" id="tab-tree">
+        <h2>Partie II — Arborescence & Inventaire des Fichiers</h2>
+        <p>
+          Explorez les <strong>430+ fichiers</strong> du dépôt à l'aide de cet explorateur arborescent de type IDE. Cliquez sur un dossier pour le déplier et sélectionnez un fichier pour afficher son rôle, son importance et son analogie dans l'inspecteur à droite.
+        </p>
+
+        <!-- Disposition Arborescente IDE à 2 Volets -->
+        <div class="tree-explorer-layout">
+          
+          <!-- Volet Gauche : Arbre de Fichiers -->
+          <div class="tree-view-pane">
+            <div class="pane-header">
+              <span class="pane-title">📂 Arborescence du Projet</span>
+              <div style="display: flex; gap: 0.4rem;">
+                <button class="filter-pill" onclick="expandAllIdeTree()">Tout déplier</button>
+                <button class="filter-pill" onclick="collapseAllIdeTree()">Tout replier</button>
+                <button class="filter-pill" onclick="filterIdeTreeCritical()">Critiques</button>
+              </div>
+            </div>
+
+            <div class="tree-search-bar">
+              <input type="text" class="tree-search-input" placeholder="Filtrer dans l'arborescence (ex: settings, views, .py)..." onkeyup="filterIdeTree(this.value)">
+            </div>
+
+            <div class="tree-content-scroll" id="ide-tree-container">
+              <!-- Arbre rendu dynamiquement par app.js -->
+            </div>
+          </div>
+
+          <!-- Volet Droit : Inspecteur de Métadonnées -->
+          <div class="tree-inspector-pane">
+            <div class="pane-header">
+              <span class="pane-title">🔍 Inspecteur de Fichier / Composant</span>
+            </div>
+
+            <div class="inspector-body" id="tree-inspector-body">
+              <!-- Détails du fichier sélectionné rendus dynamiquement -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Tableau d'Inventaire Synthétique -->
+        <h2>Inventaire Synthétique des Composants Clés</h2>
+        <div class="table-container">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Chemin</th>
+                <th>Type</th>
+                <th>Catégorie</th>
+                <th>Importance</th>
+                <th>Codé / Généré</th>
+                <th>Objet & Rôle</th>
+                <th>Analogie Concrète</th>
+                <th>Recommandation</th>
+                <th>Évidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>manage.py</code></td>
+                <td>Python</td>
+                <td>Config Django</td>
+                <td><span class="badge badge-critical">Critique</span></td>
+                <td>Scaffold préservé</td>
+                <td>Point d'entrée CLI (migrate, runserver, seed_full)</td>
+                <td>Tableau de bord opérationnel administratif</td>
+                <td>Ne pas supprimer</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>config/</code></td>
+                <td>Package</td>
+                <td>Config Django</td>
+                <td><span class="badge badge-critical">Critique</span></td>
+                <td>Développeur</td>
+                <td>Settings (base/dev/prod), urls racine, wsgi/asgi, health checks</td>
+                <td>Tableau électrique central distribuant l'énergie</td>
+                <td>Ne pas supprimer</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>accounts/ ... zones/</code> (13 apps)</td>
+                <td>Django app</td>
+                <td>Code source métier</td>
+                <td><span class="badge badge-critical">Critique / Haute</span></td>
+                <td>Développeur</td>
+                <td>Domaines métier isolés (CRM, Rentals, AI, Compliance, etc.)</td>
+                <td>Départements autonomes d'une entreprise</td>
+                <td>Ne pas supprimer</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>templates/</code></td>
+                <td>Dossier</td>
+                <td>UI</td>
+                <td><span class="badge badge-critical">Critique</span></td>
+                <td>Développeur</td>
+                <td>Gabarits HTML partagés (base, partials par rôle, modales)</td>
+                <td>Gabarit officiel pour tous les documents</td>
+                <td>Ne pas supprimer</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>static/</code></td>
+                <td>Dossier</td>
+                <td>UI</td>
+                <td><span class="badge badge-critical">Critique</span></td>
+                <td>Mixte (CSS/JS + compilé)</td>
+                <td>12 fichiers CSS, 10 fichiers JS, images, source Tailwind</td>
+                <td>Garde-robe visuelle et comportement du site</td>
+                <td>Ne pas supprimer</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>media/</code></td>
+                <td>Dossier</td>
+                <td>Artefact runtime</td>
+                <td><span class="badge badge-medium">Moyenne</span></td>
+                <td>Généré à l'usage</td>
+                <td>Fichiers uploadés (avatars, photos de biens, baux PDF)</td>
+                <td>Armoire d'archives physiques</td>
+                <td>Ne pas supprimer sans revue</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>staticfiles/</code></td>
+                <td>Dossier</td>
+                <td>Artefact runtime</td>
+                <td><span class="badge badge-low">Faible (dev)</span></td>
+                <td>Généré (collectstatic)</td>
+                <td>Sortie statique consolidée pour Whitenoise / Nginx</td>
+                <td>Version imprimée finale d'un dossier</td>
+                <td>Régénérable</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>db.sqlite3</code></td>
+                <td>Fichier DB</td>
+                <td>Base de données</td>
+                <td><span class="badge badge-critical">Critique (dev)</span></td>
+                <td>Généré à l'exécution</td>
+                <td>Données de développement et démonstration seedées</td>
+                <td>Classeur physique local d'une agence</td>
+                <td>Ne pas supprimer sans revue</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>Dockerfile & docker-compose</code></td>
+                <td>Config</td>
+                <td>Déploiement</td>
+                <td><span class="badge badge-critical">Critique</span></td>
+                <td>Développeur</td>
+                <td>Conteneurisation (PostGIS + Redis + Django)</td>
+                <td>Recette de fabrication d'usine prête à l'emploi</td>
+                <td>Ne pas supprimer</td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Partie XII — Classification et Nettoyage -->
+        <h2>Partie XII — Classification des Fichiers & Analyse de Nettoyage</h2>
+        <div class="table-container">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Fichier / Dossier</th>
+                <th>Pourquoi il existe</th>
+                <th>Requis Runtime</th>
+                <th>Suivi Git</th>
+                <th>Régénérable</th>
+                <th>Recommandation</th>
+                <th>Niveau de Risque</th>
+                <th>Évidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>properties/.../seed_db.py</code></td>
+                <td>Ancienne commande de seed remplacée par <code>seed_data.py</code></td>
+                <td>Non</td>
+                <td><span class="badge badge-confirmed">Oui</span></td>
+                <td>Non</td>
+                <td><strong>Safe to delete after verification</strong></td>
+                <td><span class="badge badge-low">Faible</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>agencies/migrations/0003_...</code></td>
+                <td>Migration pour <code>monthly_commission_target</code></td>
+                <td><span class="badge badge-critical">Oui</span></td>
+                <td><span class="badge badge-notfound">Non (untracked)</span></td>
+                <td>Non</td>
+                <td><strong>Do not delete</strong> (À committer impérativement !)</td>
+                <td><span class="badge badge-high">Élevé</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>properties/migrations/0009_...</code></td>
+                <td>Migration pour <code>ContactRequest.channel</code></td>
+                <td><span class="badge badge-critical">Oui</span></td>
+                <td><span class="badge badge-notfound">Non (untracked)</span></td>
+                <td>Non</td>
+                <td><strong>Do not delete</strong> (À committer impérativement !)</td>
+                <td><span class="badge badge-high">Élevé</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>ai/models_store/*.pkl</code> (5 fichiers)</td>
+                <td>Modèles ML horodatés issus de <code>train_avm</code></td>
+                <td>Seul l'actif</td>
+                <td><span class="badge badge-notfound">Non</span></td>
+                <td>Oui (train_avm)</td>
+                <td><strong>Safe to delete</strong> (pour les versions inactives)</td>
+                <td><span class="badge badge-low">Faible</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+              <tr>
+                <td><code>templates/404.html, 500.html</code></td>
+                <td>Pages d'erreur personnalisées Urbanova</td>
+                <td><span class="badge badge-critical">Oui (Prod)</span></td>
+                <td><span class="badge badge-notfound">Non (untracked)</span></td>
+                <td>Non</td>
+                <td><strong>Do not delete</strong> (À committer impérativement !)</td>
+                <td><span class="badge badge-medium">Moyen</span></td>
+                <td><span class="badge badge-confirmed">Confirmé</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           ONGLET 3 : ⚙️ DJANGO INTERNALS & FICHIERS CLÉS
+           ========================================================================== -->
+      <section class="tab-content-panel" id="tab-django">
+        <h2>Partie III & IV — Django Architecture & Framework Internals</h2>
+        <p style="margin-bottom: 2rem;">
+          Analyse approfondie et exhaustive des fichiers les plus structurants du dépôt et des 22 mécanismes internes du framework Django mis en œuvre dans Urbanova Real Estate.
+        </p>
+
+        <!-- 1. config/settings/base.py (Bloc Pleine Largeur Spacieux) -->
+        <div class="glass-card highlight-blue" style="margin-bottom: 2.5rem; padding: 2.25rem;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+            <div>
+              <h3 style="margin: 0; font-size: 1.4rem; color: var(--text-primary);">config/settings/base.py</h3>
+              <span style="font-size: 0.84rem; color: var(--text-muted);">Configuration Commune Développement & Production</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <span class="badge badge-critical">Critique</span>
+              <span class="badge badge-confirmed">✓ Confirmé</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.75rem;">
+            <div>
+              <h4 style="margin-top: 0; color: var(--sapphire);">Rôle & Objet Principal</h4>
+              <p style="font-size: 0.95rem; line-height: 1.7;">
+                Définit toute la configuration partagée dev/prod : applications installées, middlewares, base de données (bascule dynamique SQLite / PostGIS via <code>USE_SQLITE</code>), cache (bascule LocMem / Redis), configuration DRF, documentation OpenAPI <code>drf-spectacular</code>, cartographie Leaflet et intégration IA (Groq / Ollama).
+              </p>
+              <p style="font-size: 0.88rem; color: var(--text-muted);">
+                <strong>Impact de sécurité :</strong> Le <code>DEFAULT_PERMISSION_CLASSES</code> de DRF est <code>IsAuthenticatedOrReadOnly</code> (lecture publique par défaut, écriture authentifiée).
+              </p>
+            </div>
+
+            <div>
+              <div class="analogy-box" style="margin: 0;">
+                <div class="analogy-header">📜 Analogie Concrète</div>
+                <div class="analogy-content">
+                  "Comme les règles de base d'un règlement intérieur d'entreprise, valables partout sauf exception explicitement autorisée dans une antenne locale (dev.py / prod.py)."
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Tableau des Symboles & Directives Clés</h4>
+          <div class="table-container" style="margin: 0;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th style="width: 220px;">Symbole / Directive</th>
+                  <th style="width: 140px;">Type</th>
+                  <th style="width: 120px;">Lignes</th>
+                  <th>Rôle & Comportement Architectural</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>INSTALLED_APPS</code></td>
+                  <td><span class="badge badge-info">Liste</span></td>
+                  <td>L.49 - 84</td>
+                  <td>Combine les modules cœur Django, les bibliothèques tierces (DRF, crispy, leaflet) et les <strong>13 applications locales</strong>.</td>
+                </tr>
+                <tr>
+                  <td><code>MIDDLEWARE</code></td>
+                  <td><span class="badge badge-info">Liste</span></td>
+                  <td>L.86 - 95</td>
+                  <td>7 middlewares standards Django de sécurité/session + <code>PropertyViewTrackingMiddleware</code> personnalisé.</td>
+                </tr>
+                <tr>
+                  <td><code>TEMPLATES</code></td>
+                  <td><span class="badge badge-info">Liste</span></td>
+                  <td>L.99 - 114</td>
+                  <td>Backend DjangoTemplates, <code>DIRS=[BASE_DIR/"templates"]</code> + context processor <code>unread_alerts</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>DATABASES</code></td>
+                  <td><span class="badge badge-info">Dict conditionnel</span></td>
+                  <td>L.118 - 141</td>
+                  <td>3 branches de connexion : SQLite forcé (CI/dev), <code>DATABASE_URL</code> (dj-database-url) ou variables <code>DB_*</code> (PostGIS par défaut).</td>
+                </tr>
+                <tr>
+                  <td><code>CACHES</code></td>
+                  <td><span class="badge badge-info">Dict conditionnel</span></td>
+                  <td>L.143 - 159</td>
+                  <td>Bascule automatique : <code>LocMemCache</code> si pas de Redis configuré, sinon <code>django_redis.cache.RedisCache</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>REST_FRAMEWORK</code></td>
+                  <td><span class="badge badge-info">Dict</span></td>
+                  <td>L.188 - 200</td>
+                  <td>Pagination par page de 20 éléments, permission par défaut <code>IsAuthenticatedOrReadOnly</code>.</td>
+                </tr>
+                <tr>
+                  <td><code>LEAFLET_CONFIG</code></td>
+                  <td><span class="badge badge-info">Dict</span></td>
+                  <td>L.212 - 228</td>
+                  <td>Centre par défaut sur le Maroc (31.79, -7.09), tuiles OpenStreetMap gratuites sans clé API requise.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. accounts/permissions.py (Bloc Pleine Largeur Spacieux) -->
+        <div class="glass-card highlight-gold" style="margin-bottom: 2.5rem; padding: 2.25rem;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+            <div>
+              <h3 style="margin: 0; font-size: 1.4rem; color: var(--text-primary);">accounts/permissions.py</h3>
+              <span style="font-size: 0.84rem; color: var(--text-muted);">Contrôle d'Accès Transversal & Mixins de Rôles</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <span class="badge badge-critical">Critique</span>
+              <span class="badge badge-confirmed">✓ Confirmé</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1.75rem;">
+            <div>
+              <h4 style="margin-top: 0; color: var(--gold);">Rôle & Point de Vérité Unique</h4>
+              <p style="font-size: 0.95rem; line-height: 1.7;">
+                Fournit les mixins de classe de contrôle d'accès par rôle (<code>RoleRequiredMixin</code> et spécialisations) réutilisés comme classes parentes des vues à travers <strong>toutes les 13 applications</strong> pour protéger l'accès aux dashboards et actions d'administration.
+              </p>
+              <p style="font-size: 0.88rem; color: var(--text-muted);">
+                Le contrôle s'exécute dans <code>dispatch()</code> avant le corps de la vue, levant <code>PermissionDenied</code> (HTTP 403) en cas de rôle non autorisé.
+              </p>
+            </div>
+
+            <div>
+              <div class="analogy-box" style="margin: 0;">
+                <div class="analogy-header">🛂 Analogie Concrète</div>
+                <div class="analogy-content">
+                  "Le point de contrôle de sécurité et le vigile à l'entrée de chaque étage qui inspecte le badge électronique avant de déverrouiller la porte d'accès."
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <h4 style="margin-bottom: 0.75rem; color: var(--text-primary);">Classes & Mixins d'Autorisation</h4>
+          <div class="table-container" style="margin: 0;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th style="width: 260px;">Classe / Mixin</th>
+                  <th style="width: 150px;">Type</th>
+                  <th>Comportement & Règle d'Accès</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>RoleRequiredMixin</code></td>
+                  <td><span class="badge badge-info">AccessMixin</span></td>
+                  <td>Vérifie <code>request.user.role == self.required_role</code> ou superuser ; lève <code>PermissionDenied</code> (HTTP 403) sinon.</td>
+                </tr>
+                <tr>
+                  <td><code>AdminRequiredMixin</code>, <code>AgencyRequiredMixin</code>, <code>ClientRequiredMixin</code>, <code>OwnerRequiredMixin</code></td>
+                  <td><span class="badge badge-info">Classes Dérivées</span></td>
+                  <td>Spécialisations strictes pour chaque rôle individuel exact.</td>
+                </tr>
+                <tr>
+                  <td><code>SellerOwnerRequiredMixin</code>, <code>BuyerRequiredMixin</code>, <code>TenantRequiredMixin</code></td>
+                  <td><span class="badge badge-history">Alias Historiques</span></td>
+                  <td>Alias conservés pointant vers <code>OwnerRequiredMixin</code> et <code>ClientRequiredMixin</code> (traces de fusion de rôles).</td>
+                </tr>
+                <tr>
+                  <td><code>AgencyOrAgentRequiredMixin</code>, <code>OwnerOrAdminRequiredMixin</code>, <code>ReportAccessRequiredMixin</code></td>
+                  <td><span class="badge badge-info">LoginRequiredMixin</span></td>
+                  <td>Combinaisons multi-rôles autorisant plusieurs profils avec message d'erreur français explicite.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 3. Services PDF ReportLab (Bloc Pleine Largeur Spacieux) -->
+        <div class="glass-card highlight-emerald" style="margin-bottom: 2.5rem; padding: 2.25rem;">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1rem;">
+            <div>
+              <h3 style="margin: 0; font-size: 1.4rem; color: var(--text-primary);">Génération de Documents PDF Juridiques & d'Avis de Valeur</h3>
+              <span style="font-size: 0.84rem; color: var(--text-muted);">properties/services/valuation_report.py & rentals/services/contracts_pdf.py</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+              <span class="badge badge-high">Haute</span>
+              <span class="badge badge-confirmed">✓ Testé (%PDF)</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+            <div>
+              <h4 style="margin-top: 0; color: var(--emerald);">Génération Réelle via ReportLab</h4>
+              <p style="font-size: 0.95rem; line-height: 1.7;">
+                Génèrent des documents PDF officiels directement en mémoire via la bibliothèque <strong>ReportLab 4.2.5</strong> :
+              </p>
+              <ul style="margin-left: 1.25rem; font-size: 0.92rem; color: var(--text-secondary); line-height: 1.7;">
+                <li><strong>Avis de valeur immobilière (5 pages) :</strong> Récapitulatif du bien, estimation AVM, historique de prix et analyse du marché de quartier.</li>
+                <li><strong>Contrat de bail d'habitation :</strong> Conforme aux exigences formelles de la <strong>loi marocaine 67-12</strong>.</li>
+                <li><strong>Compromis de vente :</strong> Référencé selon le Dahir des Obligations et Contrats (DOC).</li>
+              </ul>
+              <p style="font-size: 0.85rem; color: var(--emerald); margin-top: 0.75rem; font-weight: 600;">
+                ✓ Vérifié par exécution de tests automatisés : réponse HTTP 200, en-tête <code>%PDF</code>, taille > 1000 octets.
+              </p>
+            </div>
+
+            <div>
+              <div class="analogy-box" style="margin: 0;">
+                <div class="analogy-header">🖋️ Analogie Concrète</div>
+                <div class="analogy-content">
+                  "L'imprimerie notariale et juridique qui rédige sur commande un document officiel certifié conforme aux lois marocaines en vigueur."
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. 22 Mécanismes Django (Tableau Pleine Largeur) -->
+        <h2>Les 22 Mécanismes Internes du Framework Django dans Urbanova</h2>
+        <p style="margin-bottom: 1.25rem;">Inventaire exhaustif des mécanismes du framework Django implémentés dans l'architecture :</p>
+        <div class="table-container">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th style="width: 200px;">Mécanisme Django</th>
+                <th style="width: 240px;">Ce que c'est</th>
+                <th>Configuration dans ce dépôt</th>
+                <th style="width: 220px;">Fichiers exacts</th>
+                <th style="width: 120px;">Évidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Projet Django</strong></td><td>Package de configuration racine</td><td><code>config/</code> avec settings, urls, wsgi, asgi</td><td><code>config/*</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Apps Django</strong></td><td>Modules métier autonomes</td><td>13 apps locales + tierces (DRF, Leaflet...)</td><td><code>base.py::LOCAL_APPS</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>manage.py</strong></td><td>CLI d'administration</td><td>Scaffold standard, settings dev par défaut</td><td><code>manage.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Settings</strong></td><td>Configuration globale</td><td>3 fichiers en cascade (base ➔ dev/prod)</td><td><code>config/settings/*.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Routage URL</strong></td><td>Résolution requête ➔ vue</td><td><code>config/urls.py</code> inclut 13 urls.py + 4 API</td><td><code>config/urls.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>WSGI / ASGI</strong></td><td>Interfaces serveurs</td><td>WSGI actif (Gunicorn), ASGI prêt</td><td><code>wsgi.py</code>, <code>asgi.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Configuration d'app</strong></td><td>Hooks de démarrage</td><td><code>AccountsConfig.ready()</code> importe signals</td><td><code>accounts/apps.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Middleware</strong></td><td>Traitement en chaîne</td><td>7 standards + <code>PropertyViewTrackingMiddleware</code></td><td><code>dashboard/middleware.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Templates</strong></td><td>Rendu côté serveur</td><td>Moteur DjangoTemplates, <code>APP_DIRS=True</code></td><td><code>templates/base.html</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Statiques & Médias</strong></td><td>CSS/JS & uploads</td><td>STATIC_ROOT (staticfiles/), MEDIA_ROOT (media/)</td><td><code>base.py</code>, <code>urls.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Authentification</strong></td><td>Système de login</td><td><code>django.contrib.auth</code> + <code>accounts.User</code></td><td><code>accounts/models.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Sessions & CSRF</strong></td><td>Maintien de session & sécurité</td><td>Session DB (542 sessions observées) + CSRF token</td><td><code>MIDDLEWARE</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Context Processors</strong></td><td>Variables globales template</td><td><code>unread_alerts</code> (dashboard) + 4 standards</td><td><code>context_processors.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Forms & Admin</strong></td><td>Validation & back-office</td><td>7 apps avec forms.py, 12 apps dans admin.py</td><td><code>*/forms.py</code>, <code>*/admin.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Migrations</strong></td><td>Historique de schéma</td><td>32 migrations à travers 13 apps (2 non trackées)</td><td><code>*/migrations/*.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Commandes CLI</strong></td><td>Scripts de gestion</td><td>8 commandes custom dans management/commands/</td><td><code>*/commands/*.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><strong>Fuseau & I18N</strong></td><td>Temps & langue</td><td><code>TIME_ZONE="Africa/Casablanca"</code>, <code>fr-fr</code></td><td><code>base.py</code></td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           ONGLET 4 : 💾 BASE DE DONNÉES & 40 MODÈLES
+           ========================================================================== -->
+      <section class="tab-content-panel" id="tab-database">
+        <h2>Partie V — Base de Données & Modèle de Données (~40 Modèles)</h2>
+        <p>Inventaire complet et filtrable des ~40 modèles de données répartis sur les 13 applications :</p>
+
+        <div class="table-container">
+          <div class="table-controls">
+            <input type="text" class="table-search-input" placeholder="Rechercher un modèle..." onkeyup="filterTable('models-table', this.value)">
+            <div class="table-filter-pills">
+              <span class="filter-pill active" onclick="filterTableByBadge('models-table', '')">Tous</span>
+              <span class="filter-pill" onclick="filterTableByBadge('models-table', 'properties')">properties</span>
+              <span class="filter-pill" onclick="filterTableByBadge('models-table', 'accounts')">accounts</span>
+              <span class="filter-pill" onclick="filterTableByBadge('models-table', 'crm')">crm</span>
+              <span class="filter-pill" onclick="filterTableByBadge('models-table', 'rentals')">rentals</span>
+              <span class="filter-pill" onclick="filterTableByBadge('models-table', 'crowdinvest')">crowdinvest</span>
+              <span class="filter-pill" onclick="filterTableByBadge('models-table', 'ai')">ai</span>
+              <span class="filter-pill" onclick="filterTableByBadge('models-table', 'compliance')">compliance</span>
+            </div>
+          </div>
+
+          <table class="custom-table" id="models-table">
+            <thead>
+              <tr>
+                <th>Modèle</th>
+                <th>Table (app_modèle)</th>
+                <th>Objet Métier</th>
+                <th>Champs Principaux</th>
+                <th>Relations Clés</th>
+                <th>Utilisé par</th>
+                <th>Évidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><code>User</code></td><td><code>accounts_user</code></td><td>Compte utilisateur avec rôle</td><td>email (unique), username, role, phone, avatar</td><td>1-1 <code>UserProfile</code> ; FK depuis quasi tous les modèles</td><td>Toute l'application</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>UserProfile</code></td><td><code>accounts_userprofile</code></td><td>Préférences & bio utilisateur</td><td>bio, city, language, theme, email_notifications</td><td>1-1 <code>User</code></td><td>Profil, signaux</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Property</code></td><td><code>properties_property</code></td><td>Bien immobilier</td><td>title, price, surface, rooms, property_type, location (PointField)</td><td>FK <code>owner</code>, <code>agency</code>, <code>assigned_agent</code> ; O2M vers 8 modèles</td><td>Quasi toutes les apps</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>PropertyImage</code></td><td><code>properties_propertyimage</code></td><td>Photo de bien</td><td>image, is_primary, order</td><td>FK <code>property</code></td><td>Fiches biens, seed_full</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>PropertyDocument</code></td><td><code>properties_propertydocument</code></td><td>Document lié au bien</td><td>title, file, document_type</td><td>FK <code>property</code></td><td>Hub documentaire bien</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>PriceHistory</code></td><td><code>properties_pricehistory</code></td><td>Historique de prix</td><td>old_price, new_price, changed_at</td><td>FK <code>property</code></td><td>Dashboard, activité</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>SavedSearch</code></td><td><code>properties_savedsearch</code></td><td>Recherche sauvegardée</td><td>criteria (JSON), email_alerts</td><td>FK <code>user</code></td><td>Alertes automatiques</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Favorite</code></td><td><code>properties_favorite</code></td><td>Favori utilisateur</td><td>created_at</td><td>FK <code>user</code>, <code>property</code> (unique together)</td><td>Espace client</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>PropertyView</code></td><td><code>properties_propertyview</code></td><td>Vue de bien (analytics)</td><td>viewed_at</td><td>FK <code>user</code>(nullable), <code>property</code></td><td>Middleware, IA</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>ContactRequest</code></td><td><code>properties_contactrequest</code></td><td>Demande de contact</td><td>request_type, channel, status, admin_response</td><td>FK <code>property</code>, <code>sender</code>(nullable)</td><td>CRM, notifications</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>ActivityLog</code></td><td><code>properties_activitylog</code></td><td>Activité d'un bien</td><td>activity_type, description</td><td>FK <code>property</code>, <code>user</code></td><td>Dashboard bien</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Agency</code></td><td><code>agencies_agency</code></td><td>Agence immobilière</td><td>name, specialty, location (PointField), monthly_commission_target</td><td>O2O <code>owner</code> ; O2M membres, biens</td><td>App agences</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>AgencyMember</code></td><td><code>agencies_agencymember</code></td><td>Membre / agent d'agence</td><td>role_in_agency</td><td>FK <code>agency</code>, <code>user</code> (unique together)</td><td>CRM, commissions</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Review</code></td><td><code>reviews_review</code></td><td>Avis générique certifié</td><td>rating (1-5), comment</td><td>FK <code>author</code> ; GenericForeignKey (ContentType)</td><td>Fiches bien & agence</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Transaction</code></td><td><code>finance_transaction</code></td><td>Mouvement financier</td><td>transaction_type, category, amount, status</td><td>FK <code>property_linked</code>, <code>client_linked</code>, <code>agency_linked</code></td><td>Dashboard finance</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Commission</code></td><td><code>finance_commission</code></td><td>Commission d'agent</td><td>commission_type, amount, status</td><td>FK <code>agent</code>, <code>agency</code>, <code>property_linked</code></td><td>Dashboard agence</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Alert</code></td><td><code>dashboard_alert</code></td><td>Notification in-app</td><td>alert_type, title, message, is_read</td><td>FK <code>user</code></td><td>Toute l'app, context_processor</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Report</code></td><td><code>dashboard_report</code></td><td>Rapport généré</td><td>category, status, content, file</td><td>FK <code>author</code>, <code>concerned_user</code></td><td>Espace admin & propriétaire</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>AuditLog</code></td><td><code>dashboard_auditlog</code></td><td>Journal d'audit admin</td><td>action_type, target_description</td><td>FK <code>actor</code></td><td>Admin Django</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Conversation</code></td><td><code>dashboard_conversation</code></td><td>Fil de messagerie</td><td>created_at, updated_at</td><td>FK <code>participant_admin</code>, <code>participant_user</code></td><td>Messagerie</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Message</code></td><td><code>dashboard_message</code></td><td>Message individuel</td><td>body, read_at</td><td>FK <code>conversation</code>, <code>sender</code></td><td>Messagerie</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>AILog</code></td><td><code>ai_ailog</code></td><td>Journal d'appel IA</td><td>module, status, duration_ms, provider</td><td>FK <code>user</code>(nullable)</td><td>Dashboard IA</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>PriceEstimate</code></td><td><code>ai_priceestimate</code></td><td>Estimation de prix IA (AVM)</td><td>estimated_price, confidence_score, feature_importance (JSON)</td><td>FK <code>property</code></td><td>AVM, avis de valeur PDF</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>AIModelRegistry</code></td><td><code>ai_aimodelregistry</code></td><td>Registre des modèles ML</td><td>version, algorithm, r2_score, is_active</td><td>—</td><td>Commande train_avm</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Client</code></td><td><code>crm_client</code></td><td>Contact / prospect CRM</td><td>category, status, score, budget_min/max</td><td>FK <code>user</code>(nullable), <code>agency</code>, <code>agent</code></td><td>Espace agence</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Visit</code></td><td><code>crm_visit</code></td><td>Visite planifiée</td><td>scheduled_at, status</td><td>FK <code>agency</code>, <code>agent</code>, <code>property</code>, <code>client</code></td><td>Calendrier agence</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>ConciergePack</code></td><td><code>crm_conciergepack</code></td><td>Pack de conciergerie</td><td>tier, monthly_price, features</td><td>— (standalone)</td><td>Offre commerciale</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Interaction</code></td><td><code>crm_interaction</code></td><td>Historique contact client</td><td>interaction_type, description</td><td>FK <code>client</code>, <code>agent</code>, <code>property_linked</code></td><td>Timeline client</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>ClientDocument</code></td><td><code>crm_clientdocument</code></td><td>Document client</td><td>document_type, file</td><td>FK <code>client</code></td><td>Dossier client</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Lease</code></td><td><code>rentals_lease</code></td><td>Bail locatif</td><td>start_date, monthly_rent, deposit_amount, is_active</td><td>FK <code>tenant</code>, <code>landlord</code>, <code>property_linked</code></td><td>Rentals, PDF bail 67-12</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>RentPayment</code></td><td><code>rentals_rentpayment</code></td><td>Paiement de loyer</td><td>month_year, amount_due/paid, status</td><td>FK <code>lease</code> (unique avec month_year)</td><td>Suivi de loyer</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Vacancy</code></td><td><code>rentals_vacancy</code></td><td>Vacance locative</td><td>reason, estimated_cost</td><td>FK <code>property_linked</code></td><td>Dashboard vacance</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>LegalVerification</code></td><td><code>compliance_legalverification</code></td><td>Audit juridique foncier</td><td>land_title, status, has_mortgage/dispute</td><td>O2O <code>property_linked</code></td><td>Compliance juridique</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>HealthDiagnostic</code></td><td><code>compliance_healthdiagnostic</code></td><td>Diagnostic technique</td><td>structural_state, global_score</td><td>O2O <code>property_linked</code></td><td>Compliance technique</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>ZoneAnalysis</code></td><td><code>zones_zoneanalysis</code></td><td>Analyse de quartier</td><td>security_score, avg_price_sqm, price_trend</td><td>— (city/neighborhood unique together)</td><td>Jumeau numérique, IA</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>MoqaddemContact</code></td><td><code>zones_moqaddemcontact</code></td><td>Contact administratif local</td><td>full_name, phone, caidat</td><td>—</td><td>Annuaire de zone</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Auction</code></td><td><code>auctions_auction</code></td><td>Enchère immobilière</td><td>start_price, current_price, status</td><td>FK <code>property_linked</code>, <code>created_by</code></td><td>Module enchères</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>AuctionBid</code></td><td><code>auctions_auctionbid</code></td><td>Offre d'enchère</td><td>amount, status</td><td>FK <code>auction</code>, <code>bidder</code></td><td>Module enchères</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Project</code></td><td><code>crowdinvest_project</code></td><td>Projet participatif</td><td>target_amount, expected_return_pct, status</td><td>FK <code>promoter</code>, <code>agency</code>, <code>linked_property</code></td><td>Crowdinvest</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Investment</code></td><td><code>crowdinvest_investment</code></td><td>Investissement souscrit</td><td>amount, status</td><td>FK <code>project</code>, <code>investor</code></td><td>Portefeuille investisseur</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>Payout</code></td><td><code>crowdinvest_payout</code></td><td>Versement de rendement</td><td>amount, status, paid_at</td><td>FK <code>investment</code></td><td>Portefeuille investisseur</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           ONGLET 5 : 🌐 ROUTES & API REST (TABLEAUX DE RÉFÉRENCE ARCHITECTURALE)
+           ========================================================================== -->
+      <section class="tab-content-panel" id="tab-routing">
+        
+        <!-- En-tête de Section Exécutif -->
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <h2 style="margin: 0;">Partie VI — Routage, Endpoints & API REST</h2>
+            <p style="margin-top: 0.35rem; color: var(--text-muted);">
+              Répertoire exhaustif et color-codé des 19 préfixes d'URL, des endpoints API REST (DRF) et des 26 routes de tableaux de bord.
+            </p>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <a href="#table-api-rest" class="badge badge-confirmed" style="text-decoration: none; padding: 0.45rem 0.85rem; font-size: 0.84rem;">
+              ⚡ Swagger OpenAPI 3 (/api/docs/)
+            </a>
+          </div>
+        </div>
+
+        <!-- 4 Indicateurs Clés de l'Architecture de Routage -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+          <div class="stat-card" style="padding: 1.15rem 1.35rem;">
+            <div class="stat-value" style="font-size: 1.8rem; color: var(--sapphire);">4 Apps</div>
+            <div class="stat-label">API REST Dédiée DRF</div>
+          </div>
+          <div class="stat-card" style="padding: 1.15rem 1.35rem;">
+            <div class="stat-value" style="font-size: 1.8rem; color: var(--gold-light);">26 Routes</div>
+            <div class="stat-label">Tableaux de Bord par Rôle</div>
+          </div>
+          <div class="stat-card" style="padding: 1.15rem 1.35rem;">
+            <div class="stat-value" style="font-size: 1.8rem; color: var(--emerald);">16 Routes</div>
+            <div class="stat-label">Crowdinvesting Participatif</div>
+          </div>
+          <div class="stat-card" style="padding: 1.15rem 1.35rem;">
+            <div class="stat-value" style="font-size: 1.8rem; color: var(--cyan);">GeoJSON</div>
+            <div class="stat-label">Flux SIG Leaflet / Three.js</div>
+          </div>
+        </div>
+
+        <!-- Schéma Architectural de la Couche de Connexion -->
+        <div class="analogy-box" style="margin-bottom: 2rem;">
+          <div class="analogy-header">🔄 Couche de Connexion & Résolution de Requête (Vérifiée)</div>
+          <div class="analogy-content" style="font-style: normal; font-family: var(--font-code); font-size: 0.85rem; line-height: 1.65; color: var(--text-secondary);">
+            Appel Navigateur (SSR) ou fetch() AJAX ➔ config/urls.py ➔ &lt;app&gt;/urls.py (ou api_urls.py) ➔ Mixins de permission (RoleRequiredMixin) ➔ Formulaires / Serializers DRF ➔ Services Métier (ReportLab / ML) ➔ ORM Django (PostGIS / SQLite) ➔ Réponse HTML ou JSON
+          </div>
+        </div>
+
+        <!-- Filtre de Recherche Global dans les Tables -->
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem 1.25rem; margin-bottom: 2.25rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 280px;">
+            <span style="font-size: 1.1rem; color: var(--gold);">🔍</span>
+            <input type="text" class="tree-search-input" placeholder="Filtrer instantanément dans tous les tableaux (ex: geojson, estimate, dashboard, pdf)..." onkeyup="filterTable('table-api-rest', this.value); filterTable('table-dashboard', this.value); filterTable('table-accounts-props', this.value);" style="flex: 1; padding: 0.5rem 0.85rem; font-size: 0.88rem;">
+          </div>
+          <div style="display: flex; gap: 0.5rem; font-size: 0.8rem; color: var(--text-muted);">
+            <span>Accès direct :</span>
+            <a href="#table-api-rest" style="color: var(--sapphire); text-decoration: none; font-weight: 600;">1. API REST DRF</a> •
+            <a href="#table-dashboard" style="color: var(--gold); text-decoration: none; font-weight: 600;">2. Dashboards (26)</a> •
+            <a href="#table-accounts-props" style="color: var(--emerald); text-decoration: none; font-weight: 600;">3. Auth & Biens</a> •
+            <a href="#table-apps-summary" style="color: var(--cyan); text-decoration: none; font-weight: 600;">4. 13 Apps</a>
+          </div>
+        </div>
+
+        <!-- ==========================================================================
+             TABLEAU 1 : ⚡ API REST (DRF & OPENAPI SWAGGER)
+             ========================================================================== -->
+        <div style="margin-bottom: 3rem;" id="table-api-rest">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <span style="font-size: 1.3rem;">⚡</span>
+              <h3 style="margin: 0; font-size: 1.25rem; color: var(--sapphire);">1. Endpoints API REST (Django REST Framework & IA)</h3>
+            </div>
+            <span class="badge badge-confirmed">4 Applications Connectées</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Endpoints exposés par <code>properties/api_urls.py</code>, <code>agencies/api_urls.py</code>, <code>reviews/api_urls.py</code> et <code>ai/api_urls.py</code> :
+          </p>
+
+          <div class="table-container">
+            <table class="custom-table table-fit" id="table-api-rest">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Méthode</th>
+                  <th style="width: 290px;">Point d'Entrée (URL / Route & Vue)</th>
+                  <th style="width: 170px;">Format & Auth</th>
+                  <th>Rôle Métier & Détails Techniques</th>
+                  <th style="width: 110px; text-align: right;">Certification</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/api/properties/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>api-property-list</code> • Vue: <code>PropertyListAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(59, 130, 246, 0.18); color: #93c5fd; font-size: 0.7rem;">JSON Paginé (20)</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">IsAuthOrReadOnly</span>
+                    </div>
+                  </td>
+                  <td>
+                    Catalogue des biens immobiliers avec filtrage déclaratif via <code>django-filter</code> (ville, type de bien, fourchette de prix, nombre de pièces).
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--cyan); font-family: var(--font-code); font-size: 0.88rem;">/api/properties/geojson/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>api-property-geojson</code> • Vue: <code>PropertyGeoJSONView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(6, 182, 212, 0.18); color: #67e8f9; font-size: 0.7rem;">GeoJSON SIG</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Public</span>
+                    </div>
+                  </td>
+                  <td>
+                    Flux géospatial au standard <code>FeatureCollection GeoJSON</code> pour alimenter la cartographie interactive Leaflet et le jumeau numérique 3D.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/api/properties/&lt;pk&gt;/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>api-property-detail</code> • Vue: <code>PropertyDetailAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(59, 130, 246, 0.18); color: #93c5fd; font-size: 0.7rem;">JSON</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">IsAuthOrReadOnly</span>
+                    </div>
+                  </td>
+                  <td>
+                    Fiche détaillée d'un bien spécifique incluant photos, documents techniques et historique de prix.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/api/properties/suggest/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>api-property-suggest</code> • Vue: <code>PropertySuggestAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(59, 130, 246, 0.18); color: #93c5fd; font-size: 0.7rem;">JSON</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Public</span>
+                    </div>
+                  </td>
+                  <td>
+                    Endpoint d'autocomplétion dynamique pour la barre de recherche rapide par ville et quartier.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span> <span class="badge-method post">POST</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/api/properties/saved-searches/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>api-saved-search-list-create</code> • <code>SavedSearchListCreateAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(59, 130, 246, 0.18); color: #93c5fd; font-size: 0.7rem;">JSON</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Authentifié</span>
+                    </div>
+                  </td>
+                  <td>
+                    CRUD des recherches sauvegardées de l'utilisateur connecté avec configuration des alertes automatiques par email.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method post">POST</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--sapphire); font-family: var(--font-code); font-size: 0.88rem;">/api/ai/estimate/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>ai_api:estimate</code> • Vue: <code>PriceEstimateAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(139, 92, 246, 0.18); color: #c084fc; font-size: 0.7rem;">JSON IA</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Connecté</span>
+                    </div>
+                  </td>
+                  <td>
+                    Inférence du modèle d'évaluation immobilière AVM (XGBoost / scikit-learn) : retourne le prix estimé, l'intervalle de confiance et l'impact SHAP.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--sapphire); font-family: var(--font-code); font-size: 0.88rem;">/api/ai/score/&lt;pk&gt;/ & /similar/&lt;pk&gt;/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>ai_api:score</code> • <code>PropertyScoreAPIView</code> / <code>SimilarPropertiesAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(139, 92, 246, 0.18); color: #c084fc; font-size: 0.7rem;">JSON IA</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Connecté</span>
+                    </div>
+                  </td>
+                  <td>
+                    Calcul du score d'attractivité d'un bien et recommandation vectorielle par similarité d'embeddings (FAISS).
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method post">POST</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--purple); font-family: var(--font-code); font-size: 0.88rem;">/api/ai/chat/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>ai_api:chat</code> • Vue: <code>ChatbotAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(139, 92, 246, 0.18); color: #c084fc; font-size: 0.7rem;">JSON RAG</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Connecté</span>
+                    </div>
+                  </td>
+                  <td>
+                    Chatbot conversationnel augmenté par RAG (recherche vectorielle FAISS + inférence Groq Llama 3) avec journalisation dans <code>AILog</code>.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/api/agencies/ & /api/agencies/geojson/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>api-agency-list</code> • <code>AgencyListAPIView</code> / <code>AgencyGeoJSONView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(59, 130, 246, 0.18); color: #93c5fd; font-size: 0.7rem;">JSON / GeoJSON</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Lecture Publique</span>
+                    </div>
+                  </td>
+                  <td>
+                    Annuaire des agences immobilières partenaires et géolocalisation de leurs sièges et agents.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/api/reviews/property/&lt;pk&gt;/ & agency/&lt;pk&gt;/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>api-property-reviews</code> • <code>PropertyReviewsAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(59, 130, 246, 0.18); color: #93c5fd; font-size: 0.7rem;">JSON</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Lecture Publique</span>
+                    </div>
+                  </td>
+                  <td>
+                    Flux JSON des avis et notes certifiés attachés aux biens ou aux agences (ContentType générique).
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--gold-light); font-family: var(--font-code); font-size: 0.88rem;">/api/docs/ & /api/schema/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>swagger-ui</code> • Généré par <code>drf-spectacular</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-confirmed" style="font-size: 0.7rem;">OpenAPI 3.0</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Public</span>
+                    </div>
+                  </td>
+                  <td>
+                    Interface interactive Swagger UI permettant de tester en direct tous les endpoints de l'API REST Urbanova.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==========================================================================
+             TABLEAU 2 : 🎛️ TABLEAUX DE BORD (/dashboard/ — 26 ROUTES)
+             ========================================================================== -->
+        <div style="margin-bottom: 3rem;" id="table-dashboard">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <span style="font-size: 1.3rem;">🎛️</span>
+              <h3 style="margin: 0; font-size: 1.25rem; color: var(--gold-light);">2. Espace Authentifié & Tableaux de Bord (`/dashboard/` — 26 Routes)</h3>
+            </div>
+            <span class="badge badge-critical">App la plus riche en routes</span>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Vues Django de l'espace connecté gérant les tableaux de bord multi-rôles, le cycle de vie des rapports, les alertes et la messagerie interne :
+          </p>
+
+          <div class="table-container">
+            <table class="custom-table table-fit" id="table-dashboard">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Méthode</th>
+                  <th style="width: 290px;">Point d'Entrée (URL / Route & Vue)</th>
+                  <th style="width: 170px;">Format & Auth</th>
+                  <th>Rôle Métier & Détails Techniques</th>
+                  <th style="width: 110px; text-align: right;">Certification</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/dashboard/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>dashboard:home</code> • Vue: <code>DashboardHomeView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">Redirection 302</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Connecté</span>
+                    </div>
+                  </td>
+                  <td>
+                    Aiguillage intelligent qui redirige l'utilisateur vers son tableau de bord spécifique selon <code>request.user.role</code>.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/dashboard/{admin,agency,client,owner}/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>dashboard:*</code> • 5 vues spécialisées
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML (SSR)</span>
+                      <span class="badge badge-high" style="font-size: 0.68rem;">Rôle Dédié</span>
+                    </div>
+                  </td>
+                  <td>
+                    Espaces de pilotage : KPI globaux (Admin), CRM & visites (Agence), baux & loyers (Propriétaire), favoris & investissements (Client).
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--emerald); font-family: var(--font-code); font-size: 0.88rem;">/dashboard/api/stats/ & /api/charts/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>dashboard:api-*</code> • <code>DashboardStatsAPIView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(16, 185, 129, 0.18); color: #34d399; font-size: 0.7rem;">JSON Interne</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Connecté</span>
+                    </div>
+                  </td>
+                  <td>
+                    Vues Django classiques (dans <code>api_views.py</code>, hors DRF) renvoyant des flux JSON pour alimenter les graphiques BI en direct.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/dashboard/admin/estimation-ia/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>dashboard:admin_avm</code> • Vue: <code>AdminAVMView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML (SSR)</span>
+                      <span class="badge badge-critical" style="font-size: 0.68rem;">Admin Only</span>
+                    </div>
+                  </td>
+                  <td>
+                    Interface d'administration pour inspecter et tester en direct les estimations AVM sur l'ensemble du parc immobilier.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method crud">CRUD</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/dashboard/rapports/... (8 routes)</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>dashboard:report-*</code> • Vues cycle de vie Report
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML & PDF</span>
+                      <span class="badge badge-high" style="font-size: 0.68rem;">Admin / Owner</span>
+                    </div>
+                  </td>
+                  <td>
+                    Cycle de vie complet du modèle <code>Report</code> : liste, création propriétaire, pré-génération IA, validation admin, téléchargement et archivage.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span> <span class="badge-method post">POST</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/dashboard/alertes/... (3 routes)</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>dashboard:alerts</code> • <code>AlertListView</code> / <code>AlertMarkReadView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML & AJAX</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Connecté</span>
+                    </div>
+                  </td>
+                  <td>
+                    Consultation des notifications in-app et marquage lu individuel ou global (connecté au context processor <code>unread_alerts</code>).
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method crud">CRUD</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/dashboard/messagerie/... (11 routes)</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>dashboard:*-messages</code> • 4 jeux de vues
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML & AJAX</span>
+                      <span class="badge badge-high" style="font-size: 0.68rem;">Rôles Dédiés</span>
+                    </div>
+                  </td>
+                  <td>
+                    Système de messagerie interne multi-rôles permettant l'échange direct de messages entre administrateurs, agences et clients.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method post">POST</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--purple); font-family: var(--font-code); font-size: 0.88rem;">/dashboard/chatbot/query/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>dashboard:chatbot-query</code> • <code>AdminChatbotQueryView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(139, 92, 246, 0.18); color: #c084fc; font-size: 0.7rem;">JSON AJAX</span>
+                      <span class="badge badge-critical" style="font-size: 0.68rem;">Admin Only</span>
+                    </div>
+                  </td>
+                  <td>
+                    Point d'entrée du widget flottant d'assistance IA pour l'administrateur système dans le dashboard.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==========================================================================
+             TABLEAU 3 : 🔐 COMPTES & BIENS (ACCOUNTS & PROPERTIES)
+             ========================================================================== -->
+        <div style="margin-bottom: 3rem;" id="table-accounts-props">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <span style="font-size: 1.3rem;">🔐</span>
+              <h3 style="margin: 0; font-size: 1.25rem; color: var(--emerald);">3. Authentification, Profils & Fiches Biens</h3>
+            </div>
+            <span class="badge badge-confirmed">Flux Utilisateurs Cœur</span>
+          </div>
+
+          <div class="table-container">
+            <table class="custom-table table-fit" id="table-accounts-props">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Méthode</th>
+                  <th style="width: 290px;">Point d'Entrée (URL / Route & Vue)</th>
+                  <th style="width: 170px;">Format & Auth</th>
+                  <th>Rôle Métier & Détails Techniques</th>
+                  <th style="width: 110px; text-align: right;">Certification</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge-method get">GET</span> <span class="badge-method post">POST</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/accounts/register/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>accounts:register</code> • Vue: <code>UserRegisterView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML (Form)</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Anonyme</span>
+                    </div>
+                  </td>
+                  <td>
+                    Inscription multi-rôles (Client, Propriétaire, Agence) avec création automatique du <code>UserProfile</code> via signal <code>post_save</code>.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span> <span class="badge-method post">POST</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/accounts/login/ & /logout/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>accounts:login</code> • <code>UserLoginView</code> / <code>UserLogoutView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML (Session)</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">CSRF Protégé</span>
+                    </div>
+                  </td>
+                  <td>
+                    Authentification par adresse email unique avec gestion de session persistante dans SQLite/PostGIS.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/properties/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>properties:list</code> • Vue: <code>PropertyListView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML (SSR)</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Public</span>
+                    </div>
+                  </td>
+                  <td>
+                    Catalogue public des biens avec filtrage par critères et pagination.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/properties/&lt;pk&gt;/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>properties:detail</code> • Vue: <code>PropertyDetailView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge badge-info" style="font-size: 0.7rem;">HTML (SSR)</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Public</span>
+                    </div>
+                  </td>
+                  <td>
+                    Fiche bien complète déclenchant l'empilement de la vue dans Redis via <code>PropertyViewTrackingMiddleware</code>.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method get">GET</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: var(--gold-light); font-family: var(--font-code); font-size: 0.88rem;">/properties/&lt;pk&gt;/valuation-report-pdf/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>properties:valuation-report-pdf</code> • <code>PropertyValuationReportPDFView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(245, 158, 11, 0.18); color: #fcd34d; font-size: 0.7rem;">PDF (ReportLab)</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Connecté</span>
+                    </div>
+                  </td>
+                  <td>
+                    Génération d'un rapport PDF d'avis de valeur immobilière de 5 pages (estimation AVM, comparables et tendances).
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé (testé %PDF)</span></td>
+                </tr>
+
+                <tr>
+                  <td><span class="badge-method post">POST</span></td>
+                  <td>
+                    <div style="font-weight: 700; color: #ffffff; font-family: var(--font-code); font-size: 0.88rem;">/properties/&lt;pk&gt;/favorite/</div>
+                    <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 0.2rem;">
+                      <code>properties:toggle-favorite</code> • <code>ToggleFavoriteView</code>
+                    </div>
+                  </td>
+                  <td>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; align-items: flex-start;">
+                      <span class="badge" style="background: rgba(59, 130, 246, 0.18); color: #93c5fd; font-size: 0.7rem;">JSON AJAX</span>
+                      <span class="badge badge-info" style="font-size: 0.68rem;">Connecté</span>
+                    </div>
+                  </td>
+                  <td>
+                    Ajout / retrait asynchrone d'un bien des favoris de l'utilisateur connecté avec retour d'état instantané.
+                  </td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==========================================================================
+             TABLEAU 4 : 🏗️ SYNTHÈSE DES 13 APPLICATIONS MÉTIER
+             ========================================================================== -->
+        <div style="margin-bottom: 2rem;" id="table-apps-summary">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <span style="font-size: 1.3rem;">🏗️</span>
+              <h3 style="margin: 0; font-size: 1.25rem; color: var(--gold);">4. Synthèse Exhaustive des Volumes de Routes par Application</h3>
+            </div>
+            <span class="badge badge-info">13 Applications Locales</span>
+          </div>
+
+          <div class="table-container">
+            <table class="custom-table table-fit">
+              <thead>
+                <tr>
+                  <th style="width: 140px;">Application</th>
+                  <th style="width: 150px;">Nombre de Routes</th>
+                  <th>Points Notables & Particularités Architecturales</th>
+                  <th style="width: 110px; text-align: right;">Certification</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>dashboard</strong></td>
+                  <td><span class="badge badge-critical">26 routes</span></td>
+                  <td>Le plus riche : un tableau de bord par rôle, rapports d'audit (8), alertes (3), messagerie (11), chatbot flottant admin.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>crowdinvest</strong></td>
+                  <td><span class="badge badge-high">16 routes</span></td>
+                  <td>Cycle de vie complet : création de projet → validation admin → investissement → versements de dividendes (Payouts).</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>properties</strong></td>
+                  <td><span class="badge badge-high">11 routes</span></td>
+                  <td>Catalogue, fiches détaillées, tracking de vues Redis asynchrone, favoris, avis de valeur PDF 5 pages.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>accounts</strong></td>
+                  <td><span class="badge badge-medium">9 routes</span></td>
+                  <td>Authentification, flux mot de passe (5 vues), profil, gestion AJAX des utilisateurs.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>crm</strong></td>
+                  <td><span class="badge badge-medium">8 routes</span></td>
+                  <td>Suivi des prospects, calendrier des visites d'agents, interactions, packs de conciergerie.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>zones</strong></td>
+                  <td><span class="badge badge-medium">7 routes</span></td>
+                  <td>Jumeau numérique 3D (Three.js), analyse de sécurité de quartier, flux GeoJSON, annuaire Moqaddems.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>rentals</strong></td>
+                  <td><span class="badge badge-info">6 routes</span></td>
+                  <td>Baux locatifs, suivi des loyers mensuels et 2 générateurs de contrats PDF (loi 67-12 & compromis DOC).</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>compliance</strong></td>
+                  <td><span class="badge badge-info">6 routes</span></td>
+                  <td>2 sous-modules parallèles (titre foncier / diagnostic technique de structure).</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>agencies</strong></td>
+                  <td><span class="badge badge-info">6 routes</span></td>
+                  <td>Annuaire agences partenaires, gestion des agents (AgentForm réservé au directeur), API REST.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>ai</strong></td>
+                  <td><span class="badge badge-info">5 routes</span></td>
+                  <td>Staging virtuel (endpoint AJAX testé), réentraînement AVM, reconstruction de l'index RAG FAISS.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>auctions</strong></td>
+                  <td><span class="badge badge-info">5 routes</span></td>
+                  <td>Enchères immobilières, publication et offres concurrentes.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>finance</strong></td>
+                  <td><span class="badge badge-info">4 routes</span></td>
+                  <td>Simulateur de crédit hypothécaire, journal des transactions et commissions d'agents.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+                <tr>
+                  <td><strong>reviews</strong></td>
+                  <td><span class="badge badge-info">1 route</span></td>
+                  <td>Soumission d'avis certifié via ContentType générique.</td>
+                  <td style="text-align: right;"><span class="badge badge-confirmed">✓ Confirmé</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ==========================================================================
+           ONGLET 6 : 🎨 FRONTEND & UI
+           ========================================================================== -->
+      <section class="tab-content-panel" id="tab-frontend">
+        <h2>Partie VII — Frontend, Templates, CSS & JavaScript</h2>
+        <p>Analyse de la couche de présentation Server-Side Rendering (SSR) et de ses composants :</p>
+
+        <div class="card-grid">
+          <div class="stat-card"><div class="stat-value">12</div><div class="stat-label">dashboard</div></div>
+          <div class="stat-card"><div class="stat-value">11</div><div class="stat-label">properties</div></div>
+          <div class="stat-card"><div class="stat-value">9</div><div class="stat-label">accounts</div></div>
+          <div class="stat-card"><div class="stat-value">8</div><div class="stat-label">crowdinvest</div></div>
+          <div class="stat-card"><div class="stat-value">7</div><div class="stat-label">ai</div></div>
+          <div class="stat-card"><div class="stat-value">6</div><div class="stat-label">compliance</div></div>
+        </div>
+
+        <div class="table-container" style="margin-top: 2rem;">
+          <table class="custom-table">
+            <thead><tr><th>Fichier JavaScript</th><th>Rôle & Fonctionnalités</th><th>Particularités</th><th>Évidence</th></tr></thead>
+            <tbody>
+              <tr><td><code>home.js</code></td><td>Diaporama du hero, transitions et toggles thème/langue</td><td>Confirmé par les travaux antérieurs</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>voice-input.js</code></td><td>Saisie vocale interactive pour les formulaires</td><td>Attributs <code>data-voice-field="true"</code> (CRM, Crowdinvest)</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>avm-estimate.js</code></td><td>Appels AJAX vers <code>/api/ai/estimate/</code></td><td>Calcul de fourchette de prix en direct</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>owner-form-ajax.js</code></td><td>Soumission sans rechargement des formulaires propriétaire</td><td>Améliore la fluidité de publication de bien</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>property-detail.js</code></td><td>Galerie photo interactive & initialisation carte Leaflet</td><td>Affichage géospatial</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>admin-chatbot.js</code></td><td>Widget flottant du chatbot IA pour l'administrateur</td><td>Connecté à l'API RAG</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+              <tr><td><code>toast.js</code></td><td>Système de notifications toast in-app éphémères</td><td>Feedback utilisateur immédiat</td><td><span class="badge badge-confirmed">Confirmé</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           ONGLET 7 : 🔄 PARCOURS MÉTIER & WORKFLOWS
+           ========================================================================== -->
+      <section class="tab-content-panel" id="tab-workflows">
+        <h2>Partie VIII — Parcours Métier & Flux de Données</h2>
+        <p>Découvrez les 6 grands processus métier au cœur de la plateforme Urbanova :</p>
+
+        <!-- Workflow 1 -->
+        <div class="workflow-container">
+          <div class="workflow-header">
+            <div>
+              <h3 style="margin:0;">1. Inscription & Connexion Multi-rôles</h3>
+              <span style="font-size:0.85rem; color:var(--text-muted);">Acteurs : Visiteur Anonyme ➔ Utilisateur connecté</span>
+            </div>
+            <span class="badge badge-confirmed">✓ Testé & Vérifié (HTTP 302)</span>
+          </div>
+          <div class="workflow-steps-list">
+            <div class="workflow-step-item">
+              <div class="step-number-circle">1</div>
+              <div class="step-content-card">
+                <div class="step-title">Formulaire d'Inscription</div>
+                <p>L'utilisateur remplit <code>UserRegistrationForm</code> sur <code>/accounts/register/</code> avec choix de rôle (client, owner, agency).</p>
+              </div>
+            </div>
+            <div class="workflow-step-item">
+              <div class="step-number-circle">2</div>
+              <div class="step-content-card">
+                <div class="step-title">Signal Post-Save Automatique</div>
+                <p>À la création de <code>User</code>, le signal <code>accounts/signals.py::create_user_profile</code> crée automatiquement l'enregistrement <code>UserProfile</code>.</p>
+              </div>
+            </div>
+            <div class="workflow-step-item">
+              <div class="step-number-circle">3</div>
+              <div class="step-content-card">
+                <div class="step-title">Redirection Adaptée au Rôle</div>
+                <p>À la connexion, <code>DashboardHomeView</code> redirige l'utilisateur vers son tableau de bord spécifique (ex: <code>dashboard:client</code>).</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow 2 -->
+        <div class="workflow-container">
+          <div class="workflow-header">
+            <div>
+              <h3 style="margin:0;">2. Publication de Bien & Demande de Contact</h3>
+              <span style="font-size:0.85rem; color:var(--text-muted);">Acteurs : Propriétaire & Prospect</span>
+            </div>
+            <span class="badge badge-confirmed">✓ Confirmé</span>
+          </div>
+          <div class="workflow-steps-list">
+            <div class="workflow-step-item">
+              <div class="step-number-circle">1</div>
+              <div class="step-content-card">
+                <div class="step-title">Création & Conversion Géospatiale</div>
+                <p>Le propriétaire saisit les coordonnées GPS converties en <code>Point GEOS</code> dans <code>PropertyForm.save()</code>.</p>
+              </div>
+            </div>
+            <div class="workflow-step-item">
+              <div class="step-number-circle">2</div>
+              <div class="step-content-card">
+                <div class="step-title">Tracking Asynchrone dans Redis</div>
+                <p>La visite de la fiche bien active le <code>PropertyViewTrackingMiddleware</code> qui empile la vue dans Redis (<code>property_views_queue</code>).</p>
+              </div>
+            </div>
+            <div class="workflow-step-item">
+              <div class="step-number-circle">3</div>
+              <div class="step-content-card">
+                <div class="step-title">Demande de Contact & Réponse</div>
+                <p>Le prospect soumet <code>ContactRequestForm</code>. L'agence ou le propriétaire répond via <code>ContactRequestResponseForm</code>.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow 3 -->
+        <div class="workflow-container">
+          <div class="workflow-header">
+            <div>
+              <h3 style="margin:0;">3. Financement Participatif (Crowdinvest)</h3>
+              <span style="font-size:0.85rem; color:var(--text-muted);">Acteurs : Promoteur, Administrateur & Investisseur</span>
+            </div>
+            <span class="badge badge-confirmed">✓ Confirmé</span>
+          </div>
+          <div class="workflow-steps-list">
+            <div class="workflow-step-item">
+              <div class="step-number-circle">1</div>
+              <div class="step-content-card">
+                <div class="step-title">Création & Validation de Projet</div>
+                <p>Le promoteur soumet un <code>Project</code> (statut draft). L'administrateur valide le projet (statut open).</p>
+              </div>
+            </div>
+            <div class="workflow-step-item">
+              <div class="step-number-circle">2</div>
+              <div class="step-content-card">
+                <div class="step-title">Investissement & Calculs en Direct</div>
+                <p>L'investisseur souscrit via <code>InvestmentForm</code>. Les jauges <code>raised_amount</code> et <code>funded_percent</code> s'actualisent en temps réel.</p>
+              </div>
+            </div>
+            <div class="workflow-step-item">
+              <div class="step-number-circle">3</div>
+              <div class="step-content-card">
+                <div class="step-title">Suivi de Chantier & Versements (Payouts)</div>
+                <p>Publication de <code>ProjectUpdate</code> pour les investisseurs, puis génération des <code>Payout</code> de dividendes.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow 4 -->
+        <div class="workflow-container">
+          <div class="workflow-header">
+            <div>
+              <h3 style="margin:0;">4. Estimation Automatisée par IA (AVM)</h3>
+              <span style="font-size:0.85rem; color:var(--text-muted);">Acteurs : Pipeline ML (XGBoost/scikit-learn) & Utilisateur</span>
+            </div>
+            <span class="badge badge-confirmed">✓ Confirmé</span>
+          </div>
+          <div class="workflow-steps-list">
+            <div class="workflow-step-item">
+              <div class="step-number-circle">1</div>
+              <div class="step-content-card">
+                <div class="step-title">Entraînement & Enregistrement</div>
+                <p>La commande <code>python manage.py train_avm</code> entraîne les modèles, sérialise les <code>.pkl</code> et met à jour <code>AIModelRegistry</code>.</p>
+              </div>
+            </div>
+            <div class="workflow-step-item">
+              <div class="step-number-circle">2</div>
+              <div class="step-content-card">
+                <div class="step-title">Inférence & Facteurs d'Influence SHAP</div>
+                <p>Génération de <code>PriceEstimate</code> (fourchette haute/basse, score de confiance, importance des facteurs en JSON).</p>
+              </div>
+            </div>
+            <div class="workflow-step-item">
+              <div class="step-number-circle">3</div>
+              <div class="step-content-card">
+                <div class="step-title">Génération du PDF d'Avis de Valeur</div>
+                <p>Téléchargement du rapport officiel de 5 pages généré par ReportLab intégrant les résultats du modèle IA.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================================================
+           ONGLET 8 : 🔒 SÉCURITÉ, QUALITÉ & VERDICT
+           ========================================================================== -->
+      <section class="tab-content-panel" id="tab-security">
+        <h2>Partie IX, X, XI, XIII & Verdict — Sécurité, Qualité & Recommandations</h2>
+        <p>Matrice priorisée des 13 risques constatés, couverture de tests et verdict technique final :</p>
+
+        <!-- Matrice des 13 Risques -->
+        <div class="table-container" style="margin-top: 1.5rem;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Priorité</th>
+                <th>Problème / Lacune Constatée</th>
+                <th>Impact</th>
+                <th>Fichiers Concernés</th>
+                <th>Solution Recommandée</th>
+                <th>Risque si Ignoré</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background: rgba(225, 29, 72, 0.06);">
+                <td><span class="badge badge-critical">Critique</span></td>
+                <td>Valeur par défaut de <code>SECRET_KEY</code> faible et publique dans le code source</td>
+                <td>Compromission des sessions et cookies signés</td>
+                <td><code>config/settings/base.py</code></td>
+                <td>Imposer la variable obligatoire sans valeur par défaut faible en production</td>
+                <td>Usurpation d'identité et de sessions</td>
+              </tr>
+              <tr style="background: rgba(225, 29, 72, 0.06);">
+                <td><span class="badge badge-critical">Critique</span></td>
+                <td>Mot de passe de BDD par défaut en clair dans 3 fichiers (<code>base.py</code>, <code>docker-compose.yml</code>, <code>.env.example</code>)</td>
+                <td>Accès non autorisé à la base PostGIS si conservé en prod</td>
+                <td><code>base.py</code>, <code>docker-compose.yml</code></td>
+                <td>Interdire le démarrage en prod avec le mot de passe par défaut</td>
+                <td>Fuite ou altération totale des données</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-high">Haute</span></td>
+                <td>2 migrations non versionnées dans Git (<code>agencies/0003</code>, <code>properties/0009</code>)</td>
+                <td>Désynchronisation de schéma sur tout nouvel environnement</td>
+                <td><code>agencies/migrations/</code>, <code>properties/migrations/</code></td>
+                <td>Committer immédiatement ces 2 fichiers de migration</td>
+                <td>Échec du déploiement ou erreurs 500 silencieuses</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-high">Haute</span></td>
+                <td>5 apps sur 13 avec stub de test vide, 2 apps sans fichier de test</td>
+                <td>Aucune garantie de non-régression sur <code>auctions</code>, <code>crm</code>, <code>compliance</code>, etc.</td>
+                <td><code>*/tests.py</code></td>
+                <td>Écrire au moins des tests de modèles et vues critiques par module</td>
+                <td>Régressions fonctionnelles non détectées</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-high">Haute</span></td>
+                <td>Application <code>ai</code> absente de la commande de test CI</td>
+                <td>Les tests IA existants ne s'exécutent jamais sur GitHub Actions</td>
+                <td><code>.github/workflows/ci-cd.yml</code></td>
+                <td>Ajouter <code>ai</code> et <code>agencies</code> à la commande de test CI</td>
+                <td>Bugs IA déployés sans alerte</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-medium">Moyenne</span></td>
+                <td><code>crowdinvest/admin.py</code> n'enregistre aucun modèle</td>
+                <td>Impossible de gérer les projets et investissements via l'admin Django</td>
+                <td><code>crowdinvest/admin.py</code></td>
+                <td>Enregistrer <code>Project</code>, <code>Investment</code> et <code>Payout</code></td>
+                <td>Difficulté d'intervention administrative</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-medium">Moyenne</span></td>
+                <td>3 commandes de seed redondantes (<code>seed_data</code>, <code>seed_db</code>, <code>seed_full</code>)</td>
+                <td>Confusion pour les développeurs, risque d'exécuter un script incomplet</td>
+                <td><code>properties/.../commands/</code></td>
+                <td>Supprimer <code>seed_db.py</code> et unifier sur <code>seed_full.py</code></td>
+                <td>Données de démonstration hétérogènes</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-medium">Moyenne</span></td>
+                <td>Incohérence stricte entre <code>RoleRequiredMixin</code> et les alias <code>is_client/is_agency</code></td>
+                <td>Risque de rejet 403 inattendu pour les comptes avec rôles fusionnés</td>
+                <td><code>accounts/permissions.py</code></td>
+                <td>Auditer chaque vue pour harmoniser la logique d'autorisation</td>
+                <td>Expérience utilisateur dégradée</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-medium">Moyenne</span></td>
+                <td>Logique de messagerie dupliquée 4 fois dans <code>dashboard/views.py</code></td>
+                <td>Dette technique et maintenance quadruplée</td>
+                <td><code>dashboard/views.py</code></td>
+                <td>Factoriser en une vue générique paramétrée par rôle</td>
+                <td>Difficulté d'évolution</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-medium">Moyenne</span></td>
+                <td>Pages d'erreur 404/500 non suivies par Git</td>
+                <td>Pages d'erreur brutes Django affichées en production au lieu de la marque</td>
+                <td><code>templates/404.html, 500.html</code></td>
+                <td>Committer ces 2 templates personnalisés</td>
+                <td>Rupture d'identité de marque</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-low">Basse</span></td>
+                <td>Absence de <code>transaction.atomic()</code> sur les enchères concurrentes</td>
+                <td>Risque théorique de corruption de prix lors d'offres simultanées</td>
+                <td><code>auctions/models.py</code></td>
+                <td>Envelopper dans une transaction avec <code>select_for_update()</code></td>
+                <td>Incohérence de montant d'enchère</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-low">Basse</span></td>
+                <td>Mentions obsolètes dans le <code>README.md</code> (Tailwind CDN)</td>
+                <td>Documentation trompeuse</td>
+                <td><code>README.md</code></td>
+                <td>Mettre à jour la documentation avec le build local</td>
+                <td>Confusion mineure</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-info">Info</span></td>
+                <td>Traces résiduelles de l'ancien nom Yahya / ImmoTwin dans le code interne</td>
+                <td>Incohérence cosmétique</td>
+                <td>Emails démo, render.yaml</td>
+                <td>Harmoniser le nommage complet lors d'une passe de refactoring</td>
+                <td>Aucun impact fonctionnel</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Verdict Final -->
+        <h2>Verdict Technique Final</h2>
+        <div class="glass-card highlight-gold" style="margin-bottom: 1.5rem;">
+          <h3 style="margin-top:0;">Ce que l'application réalise actuellement</h3>
+          <p>
+            Urbanova Real Estate est une plateforme Django fonctionnelle qui gère, de bout en bout, le cycle de vie d'un bien immobilier marocain : publication, recherche géospatiale, contact, visite, location (bail loi 67-12 + suivi de loyer), vente (compromis DOC, enchères), financement participatif, conformité juridique/technique, et pilotage via des tableaux de bord multi-rôles, avec une assistance IA pour l'estimation de prix (AVM) et un chatbot RAG.
+          </p>
+        </div>
+
+        <div class="analogy-box" style="margin-top: 2rem;">
+          <div class="analogy-header">Synthèse pour Décideur / Partie Prenante Non Technique</div>
+          <div class="analogy-content">
+            "Cette application est un site web complet qui numérise la quasi-totalité du métier immobilier marocain — de la recherche d'un bien jusqu'à la signature d'un bail ou d'une vente, en passant par l'estimation automatique du prix par intelligence artificielle et le financement participatif. Le travail technique déjà réalisé est solide et couvre un périmètre très large ; les points restant à consolider avant une mise en production commerciale sérieuse concernent surtout la sécurisation de quelques réglages sensibles et le renforcement des tests automatiques, pas la conception d'ensemble, qui est cohérente et bien pensée."
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+      <p style="font-family: var(--font-display); font-size: 1.1rem; color: var(--text-secondary); font-style: italic; margin-bottom: 0.5rem;">
+        "Urbanova Real Estate — L'alliance de l'élégance architecturale et de la rigueur d'ingénierie logicielle."
+      </p>
+      <p style="font-size: 0.8rem; color: var(--text-muted);">
+        Rapport d'architecture produit par audit direct du dépôt • Django 5.1 & PostGIS • 13 Applications Métier
+      </p>
+    </footer>
+
+  </div>
+
+  <!-- ==========================================================================
+       MODALE DE RECHERCHE GLOBALE (CTRL+K)
+       ========================================================================== -->
+  <div class="search-modal-backdrop" id="search-modal-backdrop" onclick="handleModalBackdropClick(event)">
+    <div class="search-modal-window">
+      <div class="search-input-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--gold);"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="global-search-input" placeholder="Rechercher un modèle, une route, une techno..." autofocus onkeyup="performGlobalSearch(this.value)">
+        <span class="search-shortcut-badge">ESC</span>
+      </div>
+      <div class="search-results-box" id="search-results-box">
+        <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+          Tapez au moins 2 caractères pour rechercher dans tout le rapport...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conteneur Toast Notifications -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="data/treeData.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
